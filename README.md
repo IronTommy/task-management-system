@@ -88,7 +88,7 @@ docker-compose up --build
 
 ## Доступ к API
 
-Swagger UI будет доступен по адресу: http://localhost:8080/swagger-ui/index.html
+Swagger UI будет доступен по адресу: http://localhost:8080/swagger-ui/index.html#/
 
 ## Тестирование
 Для запуска тестов выполните следующую команду:
