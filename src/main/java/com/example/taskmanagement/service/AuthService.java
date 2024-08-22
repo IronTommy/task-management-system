@@ -26,14 +26,12 @@ public class AuthService {
     private final UserService userService;
     private final TokenGenerator tokenGenerator;
     private final PasswordEncoder passwordEncoder;
-    private final UserRepository userRepository;
     private final TokenRefreshService tokenRefreshService;
 
     public ResponseEntity<?> createNewUser(RegistrationDto registrationDto) {
         try {
             log.debug("Attempting to create new user with email: {}", registrationDto.getEmail());
 
-            // Проверка, что пароли не null
             if (registrationDto.getPassword1() == null || registrationDto.getPassword2() == null) {
                 return ResponseEntity.badRequest().body(
                         new AuthenticationError(HttpStatus.BAD_REQUEST.value(), "Пароли не могут быть пустыми"));
@@ -67,20 +65,18 @@ public class AuthService {
 
         if (refreshDto.getRefreshToken() == null) {
             log.error("Refresh token is null");
-            throw new RuntimeException("Refresh token is null");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-
         AuthenticateResponseDto responseDto = tokenRefreshService.refreshToken(refreshDto);
-        saveTokensInCookies(response, responseDto);
+
         if (responseDto != null) {
+            saveTokensInCookies(response, responseDto);
             return ResponseEntity.ok(responseDto);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
-
-
 
 
     public ResponseEntity<?> logout(HttpServletResponse response) {
@@ -121,7 +117,7 @@ public class AuthService {
         // accessTokenCookie.setHttpOnly(true);
         // accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(15 * 60); // 15 минут
+        accessTokenCookie.setMaxAge(60); // 1 минута
         accessTokenCookie.setAttribute("SameSite", "Lax");
         response.addCookie(accessTokenCookie);
 
@@ -132,7 +128,7 @@ public class AuthService {
         // refreshTokenCookie.setHttpOnly(true);
         // refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(24 * 60 * 60); // 1 дней
+        refreshTokenCookie.setMaxAge(24 * 60 * 60); // 1 день
         refreshTokenCookie.setAttribute("SameSite", "Lax");
         response.addCookie(refreshTokenCookie);
 

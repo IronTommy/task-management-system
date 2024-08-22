@@ -1,17 +1,15 @@
 package com.example.taskmanagement.controller;
 
-import com.example.taskmanagement.dto.UserDTO;
+import com.example.taskmanagement.dto.CommentDto;
 import com.example.taskmanagement.entity.Comment;
-import com.example.taskmanagement.entity.Task;
-import com.example.taskmanagement.entity.User;
 import com.example.taskmanagement.service.CommentService;
-import com.example.taskmanagement.service.TaskService;
 import com.example.taskmanagement.utils.auth.CurrentUserExtractor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -19,24 +17,17 @@ import java.util.List;
 public class CommentController {
 
     private final CommentService commentService;
-    private final TaskService taskService;
 
     @PostMapping
-    public ResponseEntity<Comment> createComment(@RequestParam Long taskId, @RequestParam String content) {
-        User currentUser = convertToUserEntity(CurrentUserExtractor.getCurrentUserFromAuthentication());
-        Task task = taskService.getTaskById(taskId).orElseThrow(() -> new RuntimeException("Task not found"));
-        Comment comment = new Comment();
-        comment.setContent(content);
-        comment.setTask(task);
-        comment.setAuthor(currentUser);
-        Comment createdComment = commentService.createComment(comment);
+    public ResponseEntity<Comment> createComment(@RequestBody CommentDto commentDto) {
+        UUID authorId = CurrentUserExtractor.getCurrentUserFromAuthentication().getId();
+        Comment createdComment = commentService.createComment(commentDto.getContent(), commentDto.getTaskId(), authorId);
         return ResponseEntity.ok(createdComment);
     }
 
     @GetMapping("/{taskId}")
     public ResponseEntity<List<Comment>> getCommentsByTask(@PathVariable Long taskId) {
-        Task task = taskService.getTaskById(taskId).orElseThrow(() -> new RuntimeException("Task not found"));
-        List<Comment> comments = commentService.getCommentsByTask(task);
+        List<Comment> comments = commentService.getCommentsByTask(taskId);
         return ResponseEntity.ok(comments);
     }
 
@@ -45,12 +36,5 @@ public class CommentController {
         commentService.deleteComment(id);
         return ResponseEntity.noContent().build();
     }
-
-    private User convertToUserEntity(UserDTO userDTO) {
-        User user = new User();
-        user.setId(userDTO.getId());
-        user.setFirstName(userDTO.getFirstName());
-        user.setEmail(userDTO.getEmail());
-        return user;
-    }
 }
+

@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Slf4j
@@ -41,12 +42,16 @@ public class TokenRefreshService {
             throw new RuntimeException("Decoded JWT is null");
         }
 
+        if (jwt.getExpiresAt().isBefore(Instant.now())) {
+            log.error("Refresh token has expired.");
+            throw new RuntimeException("Refresh token has expired");
+        }
+
         UserDTO currentUserDTO = CurrentUserExtractor.getUserFromJwt(jwt);
         UUID userId = currentUserDTO.getId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found for id: " + userId));
 
-        // Создаем новый access и refresh токены
         AuthenticateResponseDto newToken = tokenGenerator.createToken(user);
 
         return newToken;

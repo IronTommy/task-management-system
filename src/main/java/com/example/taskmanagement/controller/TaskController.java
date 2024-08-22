@@ -1,18 +1,16 @@
 package com.example.taskmanagement.controller;
 
 import com.example.taskmanagement.dto.TaskDto;
-import com.example.taskmanagement.dto.UserDTO;
 import com.example.taskmanagement.entity.Task;
-import com.example.taskmanagement.entity.User;
 import com.example.taskmanagement.service.TaskService;
-import com.example.taskmanagement.utils.auth.CurrentUserExtractor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -23,26 +21,13 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<Task> createTask(@RequestBody TaskDto taskDto) {
-        User currentUser = convertToUserEntity(CurrentUserExtractor.getCurrentUserFromAuthentication());
-        Task task = new Task();
-        task.setTitle(taskDto.getTitle());
-        task.setDescription(taskDto.getDescription());
-        task.setStatus(taskDto.getStatus());
-        task.setPriority(taskDto.getPriority());
-        task.setAuthor(currentUser);
-        task.setCreatedDate(LocalDateTime.now());
-        Task createdTask = taskService.createTask(task);
+        Task createdTask = taskService.createTask(taskDto);
         return ResponseEntity.ok(createdTask);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody TaskDto taskDto) {
-        Task task = taskService.getTaskById(id).orElseThrow(() -> new RuntimeException("Task not found"));
-        task.setTitle(taskDto.getTitle());
-        task.setDescription(taskDto.getDescription());
-        task.setStatus(taskDto.getStatus());
-        task.setPriority(taskDto.getPriority());
-        Task updatedTask = taskService.updateTask(task);
+        Task updatedTask = taskService.updateTask(id, taskDto);
         return ResponseEntity.ok(updatedTask);
     }
 
@@ -54,16 +39,40 @@ public class TaskController {
 
     @GetMapping
     public ResponseEntity<Page<Task>> getTasks(Pageable pageable) {
-        User currentUser = convertToUserEntity(CurrentUserExtractor.getCurrentUserFromAuthentication());
-        Page<Task> tasks = taskService.getTasks(currentUser, null, pageable);
+        Page<Task> tasks = taskService.getTasks(pageable);
         return ResponseEntity.ok(tasks);
     }
 
-    private User convertToUserEntity(UserDTO userDTO) {
-        User user = new User();
-        user.setId(userDTO.getId());
-        user.setFirstName(userDTO.getFirstName());
-        user.setEmail(userDTO.getEmail());
-        return user;
+    @GetMapping("/{id}")
+    public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
+        Task task = taskService.findTaskById(id);
+        if (task != null) {
+            return ResponseEntity.ok(task);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
+
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<Task>> getFilteredTasks(
+            @RequestParam(required = false) UUID authorId,
+            @RequestParam(required = false) UUID executorId,
+            Pageable pageable) {
+        Page<Task> tasks;
+        if (authorId != null && executorId != null) {
+            tasks = taskService.getTasksByAuthorOrExecutor(authorId, executorId, pageable);
+        } else if (authorId != null) {
+            tasks = taskService.getTasksByAuthor(authorId, pageable);
+        } else if (executorId != null) {
+            tasks = taskService.getTasksByExecutor(executorId, pageable);
+        } else {
+            tasks = taskService.getTasks(pageable);
+        }
+        return ResponseEntity.ok(tasks);
+    }
+
+
+
 }
+

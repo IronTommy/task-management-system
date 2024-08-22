@@ -1,12 +1,16 @@
 package com.example.taskmanagement.service;
 
 import com.example.taskmanagement.dto.RegistrationDto;
+import com.example.taskmanagement.dto.UserDTO;
 import com.example.taskmanagement.entity.User;
 import com.example.taskmanagement.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,5 +29,12 @@ public class UserService {
     public User findByEmail(String email) {
         log.debug("Method findByEmail({}) started with param: \"{}\"", String.class, email);
         return userRepository.findByEmail(email).orElse(null);
+    }
+
+    public List<UserDTO> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return users.stream()
+                .map(user -> new UserDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail()))
+                .collect(Collectors.toList());
     }
 }

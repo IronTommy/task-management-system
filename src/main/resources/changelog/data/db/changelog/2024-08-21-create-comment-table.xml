@@ -18,6 +18,9 @@
             <column name="task_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
+            <column name="created_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <addForeignKeyConstraint

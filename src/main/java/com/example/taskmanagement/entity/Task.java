@@ -1,5 +1,6 @@
 package com.example.taskmanagement.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -15,8 +16,11 @@ public class Task {
 
     private String title;
     private String description;
+    @Column(nullable = false)
     private String status;
-    private String priority;
+    @Column(nullable = false)
+    private String priority = "DEFAULT_PRIORITY";
+
 
     @ManyToOne
     @JoinColumn(name = "author_id")
@@ -26,8 +30,10 @@ public class Task {
     @JoinColumn(name = "executor_id")
     private User executor;
 
-    @OneToMany(mappedBy = "task")
+    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Comment> comments;
+
 
     @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;

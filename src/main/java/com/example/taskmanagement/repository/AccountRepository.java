@@ -10,6 +10,4 @@ import java.util.UUID;
 public interface AccountRepository extends BaseRepository<Account, UUID> {
     Optional<Account> findByEmail(String email);
 
-   // @Query("SELECT a FROM Account a WHERE a.isOnline = :isOnline")
-   // List<Account> findByIsOnline(@Param("isOnline") boolean isOnline);
 }

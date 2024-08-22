@@ -9,5 +9,4 @@ class TaskManagementSystemApplicationTests {
 	@Test
 	void contextLoads() {
 	}
-
 }
